@@ -52,6 +52,56 @@ Build the enhanced Dataflow template using Maven:
 mvn clean package -DskipTests -Dexec.mainClass=com.google.cloud.teleport.templates.BulkDecompressor -Dexec.args="--runner=DataflowRunner --project=$PROJECT_ID --stagingLocation=$STAGING_BUCKET/staging --templateLocation=$STAGING_BUCKET/templates/BulkDecompressor --region=$REGION"
 ```
 
+## Input File Patterns & Output Structure
+
+This enhanced template supports flexible input file patterns, allowing you to target specific files or directories for decompression. Here are some examples:
+
+1. Decompress all .gz files in a specific directory:
+   ```
+   inputFilePattern=gs://your-input-bucket/path/to/files/*.gz
+   ```
+
+2. Decompress files with a specific prefix:
+   ```
+   inputFilePattern=gs://your-input-bucket/path/to/files/data_*.gz
+   ```
+
+3. Decompress files in a date-based directory structure:
+   ```
+   inputFilePattern=gs://your-input-bucket/YYYY/MM/DD/*.gz
+   ```
+   This pattern will match files like `gs://your-input-bucket/2023/05/15/data.gz`.
+
+4. Decompress files across multiple subdirectories:
+   ```
+   inputFilePattern=gs://your-input-bucket/**/*.gz
+   ```
+   This pattern will recursively match all .gz files in any subdirectory.
+
+5. Decompress specific file types across a date range:
+   ```
+   inputFilePattern=gs://your-input-bucket/2023/0[1-6]/*/data.json.gz
+   ```
+   This pattern will match `data.json.gz` files in any day of the first six months of 2023.
+
+6. Decompress files with multiple extensions:
+   ```
+   inputFilePattern=gs://your-input-bucket/path/to/files/*.{gz,bz2}
+   ```
+   This pattern will match both .gz and .bz2 files.
+
+Remember to enclose your pattern in quotes if it contains special characters when running the job:
+
+```
+gcloud dataflow jobs run bulk-decompress-job \
+  --gcs-location=$STAGING_BUCKET/templates/BulkDecompressor \
+  --region=$REGION \
+  --parameters \
+inputFilePattern="gs://your-input-bucket/2023/0[1-6]/*/data.json.gz",\
+outputBucket=gs://your-output-bucket,\
+outputFailureFile=gs://your-output-bucket/failures.csv
+```
+
 ## Running the Job
 
 Execute the Dataflow job using the following command:
